@@ -1,34 +1,111 @@
 # AquilaDB
 
-**The business question:** does our leadership development change how leaders lead, and can we show it without exposing a single person?
+**A multi-model graph database for research on people.** AquilaDB keeps documents, a property graph, full-text search and vector search in one Rust engine, behind one query language. The privacy rules live inside the query compiler, not in the application around it.
 
-Most leadership development measures what is easy: attendance, satisfaction, a score at the end of a programme. It rarely measures whether behaviour changed. To measure change, three things must be in one place: the records, the relationships between them over time, and a way to ask questions of the whole population without seeing any one person. AquilaDB is that place.
+AquilaDB grew out of one need: psychological and coaching research that must answer questions about a population, over time, without exposing any one person. The same engine also serves a second purpose. It gives a language model graph context with provenance, so the model can read evidence but cannot invent it.
 
-This repository is the public face of the project: what it is for, screenshots and public issues. The source code is private.
+This repository is the public face of the project: the description, the screenshots and the public issues. The source code is private.
 
-## What a leadership function gets
+## Heritage
 
-- **Evidence, not attendance.** The records of development sit in one graph over time, so a programme can be read for change in behaviour, not only for satisfaction.
-- **A population view.** Questions go to the whole leader population, by level, function or programme, never to one person.
-- **Privacy a works council can read.** Identity fields are encrypted and can never be queried. No result comes back for a group smaller than five people. Records are de-identified before any AI step.
-- **Questions agreed before the answers exist.** A study is written down, approved by the hash of its plan, and run once. Nobody fishes in the data until something looks good.
-- **People decide, the model does not.** A language model can describe a result. Every number and status comes from a validation gate.
+AquilaDB is a re-implementation of the core of [ArangoDB](https://arangodb.com) in Rust. It keeps what ArangoDB does well and changes what a research graph cannot accept.
 
-## How it works
+**What it keeps from ArangoDB:**
 
-AquilaDB is a multi-model graph database written in Rust. Documents, a property graph, full-text search and vector search live in one engine behind one API. It speaks a query language with broad ArangoDB AQL parity, with a public [tree-sitter grammar](https://github.com/FranciscoSerranoBaptista/tree-sitter-aql). Sensitive fields are encrypted at the value level, in tiers.
+- **AQL.** The query language has broad parity with ArangoDB AQL: `FOR`, `FILTER`, `COLLECT`, `SORT`, `LIMIT`, graph traversals, `SHORTEST_PATH`, `K_SHORTEST_PATHS`, and the builtin function library. Each builtin follows the ArangoDB semantics, edge cases included. The engine checks this against the ArangoDB source, not against memory.
+- **The multi-model idea.** A record is a document, a graph vertex, a search hit and a vector neighbour at the same time. You do not copy data between a document store, a graph store and a search engine.
+- **The HTTP shape.** The API follows the ArangoDB layout: `/_api/cursor`, `/_api/document`, `/_api/collection`, `/_api/gharial` for named graphs.
+- **An open grammar.** The AQL [tree-sitter grammar](https://github.com/FranciscoSerranoBaptista/tree-sitter-aql) is public.
+
+**What it changes:**
+
+| ArangoDB | AquilaDB | Why |
+|---|---|---|
+| C++, RocksDB, VelocyPack | Rust, [fjall](https://github.com/fjall-rs/fjall) LSM store, MessagePack | Memory safety, no C++ FFI, one build toolchain. |
+| Cluster first | Single node, one writer | One writer is the throughput ceiling that research ingestion actually reaches. |
+| Vectors stored with the documents | Vectors in a separate [usearch](https://github.com/unum-cloud/usearch) HNSW file, built in bulk | An HNSW insert in a B-tree or LSM store multiplies the write volume by about 100. |
+| Full-text index by view | [tantivy](https://github.com/quickwit-oss/tantivy) BM25, opt-in per field | A full-text rebuild over all text fields caused out-of-memory failures at scale. |
+| Access control per collection | Encryption tiers per field, and a cohort floor in the query compiler | Research on people needs rules on the result, not only on the collection. |
+
+AquilaDB contains no ArangoDB source code. ArangoDB is a behavioural reference only.
+
+The second ancestor is **SparrowDB**, an earlier graph store by the same author. SparrowDB failed in production in four ways: vectors in the key-value store, sequential HNSW inserts, full-text indexes on by default, and concurrent writers. Each failure is now a design rule in AquilaDB.
+
+## What makes it different
+
+Most graph databases are general-purpose tools. They leave privacy, time, confidence and research method to the application. AquilaDB puts them in the engine.
+
+| Concern | A general-purpose graph database | AquilaDB |
+|---|---|---|
+| **Small groups** | The application must remember to hide small counts. | The query compiler adds a **cohort floor** to every grouped `COLLECT` over clinical data. A group of fewer than 5 distinct persons does not come back, for every caller, admin included. |
+| **Sensitive fields** | Access is per collection, or the application encrypts. | Each field has an **encryption tier**: `None`, `Coded`, `Narrative` or `Identity`. Narrative text is encrypted at rest with AES-256-GCM. Identity fields never leave without write rights. The compiler enforces the tiers before the query runs. |
+| **Consent** | Not modelled. | A collection declares a consent field. A person without consent is removed from each analysis before it starts. The gate fails closed. |
+| **Time** | Timestamps are plain properties. | Each node has a `TemporalContext`: creation time, validity window and a **decay function** (half-life, linear, step, sequence). A traversal can rank by recency and prune expired edges. |
+| **Confidence** | A number on an edge, with no origin. | Each confidence value declares its basis: a human ruling, a validated judge, or counted evidence. **A language model never writes a confidence number.** `JUSTIFY(id)` returns the evidence chain and its weakest link. |
+| **Retrieval for an LLM** | Vector search in one system, graph in another, glue code between them. | `GRAPH_RAG(...)` in one AQL call: vector seeds above a calibrated floor, graph expansion, reciprocal rank fusion, and rows that carry their provenance path. |
+| **Novelty** | Not modelled. | `SURPRISE(id)` ranks neighbours that are close in meaning but far in the graph. These are the candidate bridges between two bodies of work. |
+| **Research method** | Any caller can query until a result looks good. | A study is **pre-registered**. The plan is hashed before any evidence exists, an admin approves that hash, and the study runs once. A researcher key reaches only the approved studies. |
+| **Analytics** | A community appears on each run, stable or not. | Community detection runs with **consensus stability** and **lineage** across runs. A pattern that does not hold across runs is reported as unstable, not as a finding. |
+
+## The use case: psychological research under compliance
+
+The data has two shapes, and AquilaDB treats them differently.
+
+- **The research corpus** is one connected graph: works, chapters, ideas, concepts, persons and traditions, linked by citations, bridges, close matches and contradictions. Graph methods apply here: centrality, communities, paths, gaps between clusters.
+- **The coaching data** is clinical. Each session is a small island of records by construction. Graph layouts of this data show only islands. The questions here go to windows, tables and trajectories, always under the cohort floor and the consent gate.
+
+The compliance rules do not depend on a careful caller:
+
+- **The cohort floor counts persons, not rows.** Five records from one client are a cohort of one, and the engine suppresses it.
+- **Two phrasings give one answer.** The floor follows rows through subqueries and through graph traversals. A rewritten query does not escape it.
+- **A suppressed result is visible.** The response carries a warning, so an empty group and a hidden group are different.
+- **The floor can only go up.** Only a key scoped to one coach, with row access to that coach's own records, can lower it for that coach alone.
+- **Every data change goes to a change log.** The log supports point-in-time restore and a live changefeed.
+
+## A graph that gives context to a language model
+
+AquilaDB ships an [MCP](https://modelcontextprotocol.io) server. A model reads the graph through tools such as `graph_rag`, `query`, `describe`, `justify`, `surprise`, `lit_search`, `lit_coverage`, `lit_citations`, `verify_quote` and `ground_quote`.
+
+The rules for a model are strict:
+
+- **The model articulates. It does not assert.** A model can describe a result in words. Every number, status and confidence comes from the engine or from a validation gate.
+- **A quote must exist.** `ground_quote` binds a quoted passage to its source. `verify_quote` checks it again against the live source.
+- **The context carries its source.** `GRAPH_RAG` admits a seed only above a calibrated similarity floor. Each row it returns carries its seed, its depth and the path from the seed.
+- **The model works inside the floor.** A model with a researcher key sees only the results of approved studies, never the rows.
+
+## Where it is going: a research instrument
+
+The end goal is not a nicer picture of a large graph. A force layout of a dense graph gives a hairball, because it optimises the length of the edges, not the question of the researcher. Investigative tools and science-mapping tools agree on a different loop:
+
+1. **Start from a question:** a seed, a selection or a saved query.
+2. **Expand within a limit:** a bounded neighbourhood, not a whole collection.
+3. **Read a ranked list or a histogram,** not only the layout.
+4. **Select a subset and group the leaves.**
+5. **Keep the question:** save the subset, the note and the finding as a named view.
+
+Most of the computation for this loop already exists in the engine: PageRank, Leiden with consensus stability, community lineage, 2-D embedding maps, k-core, bridges, link prediction, `SURPRISE` and `JUSTIFY`. The work now is to bring these to the console as questions:
+
+- **Influential ideas:** PageRank against citation count, betweenness as a ring, the core of the graph.
+- **Novel combinations:** gaps between well-developed clusters, and links that the structure predicts but the corpus does not yet hold.
+- **Research areas and their change over time:** communities by decade, with their lineage.
+- **Origins of an idea:** the citation path back to its earliest source.
+- **Data quality:** duplicates, orphans and weak links, as a workflow and not as a footnote.
+
+For the coaching data, the instrument gives windows, tables and trajectories, under the floor.
 
 ## The stack
 
-| Part | The business question it answers |
+| Part | Role |
 |---|---|
-| **AquilaDB** | Where do the records of development live, safely, over time? |
-| **[KestrelAnalytics](https://github.com/FranciscoSerranoBaptista/KestrelAnalytics)** | What patterns hold across the population, and are they stable enough to act on? |
-| **[PeacockUI](https://github.com/FranciscoSerranoBaptista/PeacockUI)** | Can a leadership team see those patterns and decide what to do next? |
+| **AquilaDB** | The engine: the records, their relations over time, and the privacy rules. |
+| **[KestrelAnalytics](https://github.com/FranciscoSerranoBaptista/KestrelAnalytics)** | Graph and population analytics: communities with stability, centrality, statistics, pre-registered studies. |
+| **[PeacockUI](https://github.com/FranciscoSerranoBaptista/PeacockUI)** | The research console: start from a question, read ranked answers, keep the question with its finding. |
 
 ## Status
 
-`v0.1.0`, pre-release, single node. In use for my own practice research since May 2026.
+`v1.1.1`, the latest Aquila release (2026-10-12). Single node. In daily use for the author's own coaching research since May 2026.
+
+Not in scope for v1: a distributed cluster, multiple concurrent writers, and the ArangoDB features that a single-node research graph does not need.
 
 ## Screenshots
 
