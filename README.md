@@ -101,10 +101,10 @@ The same rule applies to the admin, to a rewritten query with a subquery, and to
 
 ## The use case: psychological research under compliance
 
-The data has two shapes, and AquilaDB treats them differently.
+AquilaDB holds two kinds of data and treats them differently.
 
 - **The research corpus** is one connected graph: works, chapters, ideas, concepts, persons and traditions, linked by citations, bridges, close matches and contradictions. Graph methods apply here: centrality, communities, paths, gaps between clusters.
-- **The coaching data** is clinical. Each session is a small island of records by construction. Graph layouts of this data show only islands. The questions here go to windows, tables and trajectories, always under the cohort floor and the consent gate.
+- **Clinical data** is analysed through tables, time windows and trajectories, always under the cohort floor and the consent gate.
 
 The compliance rules do not depend on a careful caller:
 
@@ -143,7 +143,7 @@ Most of the computation for this loop already exists in the engine: PageRank, Le
 - **Origins of an idea:** the citation path back to its earliest source.
 - **Data quality:** duplicates, orphans and weak links, as a workflow and not as a footnote.
 
-For the coaching data, the instrument gives windows, tables and trajectories, under the floor.
+For clinical data, the instrument gives tables, time windows and trajectories, under the floor.
 
 ## The stack
 
