@@ -1,0 +1,34 @@
+name: Collaboration request
+description: Propose research, a pilot or another form of collaboration.
+labels: ["collaboration"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not post personal, clinical or coaching data in an issue.** Describe the data by its shape and size only. An issue is public.
+  - type: input
+    id: who
+    attributes:
+      label: Who you are
+      description: Your name, and your organisation or research group.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you propose
+      description: The research question or the use case, and what you want from the collaboration.
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: The data
+      description: Optional. The kind of data and its approximate size. Say if it is clinical, and which ethics or consent rules apply.
+  - type: checkboxes
+    id: no-data
+    attributes:
+      label: Data check
+      options:
+        - label: This issue contains no personal, clinical or coaching data.
+          required: true

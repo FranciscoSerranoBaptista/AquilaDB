@@ -47,6 +47,34 @@ Most graph databases are general-purpose tools. They leave privacy, time, confid
 | **Research method** | Any caller can query until a result looks good. | A study is **pre-registered**. The plan is hashed before any evidence exists, an admin approves that hash, and the study runs once. A researcher key reaches only the approved studies. |
 | **Analytics** | A community appears on each run, stable or not. | Community detection runs with **consensus stability** and **lineage** across runs. A pattern that does not hold across runs is reported as unstable, not as a finding. |
 
+## Example: the cohort floor
+
+A collection `coachees` holds six coachees in tech and one in pharma. An admin runs a grouped query:
+
+```aql
+FOR c IN coachees
+  COLLECT industry = c.industry
+  RETURN industry
+```
+
+The query does not ask for a count, but the compiler adds one. The pharma group has one person, so it does not come back. The response says why:
+
+```json
+{
+  "result": ["tech"],
+  "extra": {
+    "warnings": [
+      {
+        "code": 2202,
+        "message": "minimum-cohort (k-anonymity) floor of 5 applied: groups smaller than 5 were suppressed (#202)"
+      }
+    ]
+  }
+}
+```
+
+The same rule applies to the admin, to a rewritten query with a subquery, and to a vertex that a graph traversal reaches.
+
 ## The use case: psychological research under compliance
 
 The data has two shapes, and AquilaDB treats them differently.
@@ -107,12 +135,10 @@ For the coaching data, the instrument gives windows, tables and trajectories, un
 
 Not in scope for v1: a distributed cluster, multiple concurrent writers, and the ArangoDB features that a single-node research graph does not need.
 
-## Screenshots
-
-<!-- add images to docs/screenshots/ -->
-
 ## Issues
 
 Use the issues here for questions, ideas and collaboration requests. The working backlog is private.
+
+**Do not post personal, clinical or coaching data in an issue.** An issue is public. To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 © 2026 Francisco Serrano Baptista. All rights reserved.

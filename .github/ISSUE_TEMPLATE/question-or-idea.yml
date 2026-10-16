@@ -1,0 +1,36 @@
+name: Question or idea
+description: Ask a question about the project, or suggest an idea.
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not post personal, clinical or coaching data in an issue.** This includes names, session text, quotes from clients and real records. Use an invented example. An issue is public.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - Question
+        - Idea
+    validations:
+      required: true
+  - type: textarea
+    id: body
+    attributes:
+      label: Your question or idea
+      description: Say what you want to know or what you suggest, and why.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Optional. Your use case, or the part of the README that you refer to.
+  - type: checkboxes
+    id: no-data
+    attributes:
+      label: Data check
+      options:
+        - label: This issue contains no personal, clinical or coaching data.
+          required: true
