@@ -125,26 +125,6 @@ The rules for a model are strict:
 - **The context carries its source.** `GRAPH_RAG` admits a seed only above a calibrated similarity floor. Each row it returns carries its seed, its depth and the path from the seed.
 - **The model works inside the floor.** A model with a researcher key sees only the results of approved studies, never the rows.
 
-## Where it is going: a research instrument
-
-The end goal is not a nicer picture of a large graph. A force layout of a dense graph gives a hairball, because it optimises the length of the edges, not the question of the researcher. Investigative tools and science-mapping tools agree on a different loop:
-
-1. **Start from a question:** a seed, a selection or a saved query.
-2. **Expand within a limit:** a bounded neighbourhood, not a whole collection.
-3. **Read a ranked list or a histogram,** not only the layout.
-4. **Select a subset and group the leaves.**
-5. **Keep the question:** save the subset, the note and the finding as a named view.
-
-Most of the computation for this loop already exists in the engine: PageRank, Leiden with consensus stability, community lineage, 2-D embedding maps, k-core, bridges, link prediction, `SURPRISE` and `JUSTIFY`. The work now is to bring these to the console as questions:
-
-- **Influential ideas:** PageRank against citation count, betweenness as a ring, the core of the graph.
-- **Novel combinations:** gaps between well-developed clusters, and links that the structure predicts but the corpus does not yet hold.
-- **Research areas and their change over time:** communities by decade, with their lineage.
-- **Origins of an idea:** the citation path back to its earliest source.
-- **Data quality:** duplicates, orphans and weak links, as a workflow and not as a footnote.
-
-For clinical data, the instrument gives tables, time windows and trajectories, under the floor.
-
 ## The stack
 
 | Part | Role |
