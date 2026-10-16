@@ -4,7 +4,7 @@
 
 AquilaDB grew out of one need: psychological and coaching research that must answer questions about a population, over time, without exposing any one person. The same engine also serves a second purpose. It gives a language model graph context with provenance, so the model can read evidence but cannot invent it.
 
-This repository is the public face of the project: the description, the screenshots and the public issues. The source code is private.
+This repository is the public face of the project: the description and the public issues. The source code is private.
 
 ## Heritage
 
@@ -28,8 +28,6 @@ AquilaDB is a re-implementation of the core of [ArangoDB](https://arangodb.com) 
 | Access control per collection | Encryption tiers per field, and a cohort floor in the query compiler | Research on people needs rules on the result, not only on the collection. |
 
 AquilaDB contains no ArangoDB source code. ArangoDB is a behavioural reference only.
-
-The second ancestor is **SparrowDB**, an earlier graph store by the same author. SparrowDB failed in production in four ways: vectors in the key-value store, sequential HNSW inserts, full-text indexes on by default, and concurrent writers. Each failure is now a design rule in AquilaDB.
 
 ## What makes it different
 
