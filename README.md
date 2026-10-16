@@ -6,6 +6,32 @@ AquilaDB grew out of one need: psychological and coaching research that must ans
 
 This repository is the public face of the project: the description and the public issues. The source code is private.
 
+## Why it matters to an organisation
+
+An organisation that invests in coaching or leadership development must answer three questions. Each one is a business risk if the answer is weak.
+
+**1. Can we prove that it works?**
+
+Most programmes measure what is easy: attendance, satisfaction, a score at the end. These numbers do not show that behaviour changed. AquilaDB keeps each record of development in one graph over time, so a programme can be read for change and not only for activity.
+
+- **Change over time:** trend models over sessions show how each person moves, and how the population moves.
+- **What works for whom:** effectiveness readouts rank interventions and coaching styles by the change that follows them.
+- **Evidence that holds:** a pattern counts only when it is stable across runs. A study is pre-registered, so nobody searches the data until a good result appears.
+
+This is the impact half of a return on investment. AquilaDB measures the change. The cost side stays in the finance systems. The readouts describe change and do not prove cause, unless the study design supports a causal claim.
+
+**2. Can we do it without exposing anyone?**
+
+Data about people's development is sensitive. A leak or a re-identified person damages trust, and it can be a breach of GDPR or of an agreement with a works council.
+
+- **Privacy by design:** the engine enforces the rules, not the analyst. No result comes back for a group of fewer than five persons. Identity fields are encrypted and are never returned without write rights.
+- **Consent:** a person without consent is removed from each analysis.
+- **Audit:** every data change goes to a change log, and every study keeps its plan, its approval and the hash of its results.
+
+**3. Can we use AI on it safely?**
+
+A language model makes the data easy to question. It also invents numbers and quotes. In AquilaDB, a model reads only through the privacy rules, every number comes from the engine, and every quote is checked against its source.
+
 ## Heritage
 
 AquilaDB is a re-implementation of the core of [ArangoDB](https://arangodb.com) in Rust. It keeps what ArangoDB does well and changes what a research graph cannot accept.
