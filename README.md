@@ -6,6 +6,12 @@ AquilaDB grew out of one need: psychological and coaching research that must ans
 
 This repository is the public face of the project: the description and the public issues. The source code is private.
 
+<p align="center">
+  <img src="assets/aquilash.png" alt="The aquilash shell connected to an AquilaDB 1.1.2 server, ready for an AQL query" width="720">
+</p>
+
+<p align="center"><em><code>aquilash</code>, the interactive AQL shell, connected to an AquilaDB server.</em></p>
+
 ## Why it matters to an organisation
 
 An organisation that invests in coaching or leadership development must answer three questions. Each one is a business risk if the answer is weak.
