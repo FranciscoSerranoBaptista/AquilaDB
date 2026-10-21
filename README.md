@@ -14,29 +14,47 @@ This repository is the public face of the project: the description and the publi
 
 ## Why it matters to an organisation
 
-An organisation that invests in coaching or leadership development must answer three questions. Each one is a business risk if the answer is weak.
+Many organisations hold data about people as a network: who reports to whom, who works with whom, who was referred where, who took which programme. A graph is the natural model for this data. It is also the easiest way to expose a person by accident.
 
-**1. Can we prove that it works?**
+The risk is not only who can read the data. The risk is how small an answer gets. A report on "the two people in team X who took leave after the reorganisation" names those two people, even when it shows only a count. A graph makes this easy, because each hop through a relation makes a group smaller.
 
-Most programmes measure what is easy: attendance, satisfaction, a score at the end. These numbers do not show that behaviour changed. AquilaDB keeps each record of development in one graph over time, so a programme can be read for change and not only for activity.
+Most graph databases control access per collection, per label or per property. They do not usually control the size of a group in a result. The application must remember to do it, in every query, for every analyst. AquilaDB moves that rule into the query compiler.
 
-- **Change over time:** trend models over sessions show how each person moves, and how the population moves.
-- **What works for whom:** effectiveness readouts rank interventions and coaching styles by the change that follows them.
-- **Evidence that holds:** a pattern counts only when it is stable across runs. A study is pre-registered, so nobody searches the data until a good result appears.
+### Where a cohort floor in a graph is useful
 
-This is the impact half of a return on investment. AquilaDB measures the change. The cost side stays in the finance systems. The readouts describe change and do not prove cause, unless the study design supports a causal claim.
+A collection opts in with one schema declaration. A subject field, such as `subject_id` or `case_id`, tells the engine which records belong to one person. After that, the rule does not depend on the domain.
 
-**2. Can we do it without exposing anyone?**
+| Domain | The graph | A typical question | What the floor stops |
+|---|---|---|---|
+| **Coaching and leadership development** | Coachees, sessions, themes, programmes | Which themes change after a programme, per business unit? | A business unit with one coachee in it. |
+| **People analytics and HR** | Employees, teams, reporting lines, collaboration, survey answers | How does engagement differ between teams that share a manager? | A survey report on a team too small to stay anonymous. Many works councils require a minimum group size for exactly this reason. |
+| **Health and care pathways** | Patients, referrals, clinics, treatments, outcomes | Which referral paths lead to a readmission? | A path that only one patient took. Health statistics often suppress small cells for the same reason. |
+| **Education and learning** | Learners, courses, cohorts, assessments | Which course sequences predict a drop-out? | A sequence that identifies one learner. |
+| **Social services and case management** | Cases, households, agencies, interventions | Which combination of services shortens a case? | A combination that matches one household. |
+| **Research panels and surveys** | Respondents, answers, segments, waves | How does a segment move between survey waves? | A segment that a join narrows to one respondent. |
 
-Data about people's development is sensitive. A leak or a re-identified person damages trust, and it can be a breach of GDPR or of an agreement with a works council.
+The common shape: the question is about a population, the data is about persons, and the relations are the valuable part.
 
-- **Privacy by design:** the engine enforces the rules, not the analyst. No result comes back for a group of fewer than five persons. Identity fields are encrypted and are never returned without write rights.
-- **Consent:** a person without consent is removed from each analysis.
-- **Audit:** every data change goes to a change log, and every study keeps its plan, its approval and the hash of its results.
+### What it gives in practice
 
-**3. Can we use AI on it safely?**
+- **One rule, applied everywhere.** The floor applies to every grouped result, also through subqueries and graph traversals. A rewritten query gives the same protection.
+- **Persons, not rows.** The engine counts distinct persons. Five records from one person are a group of one.
+- **A visible suppression.** The response carries a warning, so a reader can tell a hidden group from an empty one.
+- **A floor that only goes up.** The default is 5. A key can raise it where a policy asks for more. Only a key scoped to one owner's own records can lower it for that owner.
+- **Sensitive fields that stay closed.** Each field has an encryption tier. Narrative and identity fields are encrypted at rest, and the compiler refuses a query that uses them in a way the tier does not allow.
+- **Evidence that holds.** A study is pre-registered: the plan is hashed and approved before it runs. A pattern counts only when it is stable across runs.
+- **An audit trail.** Every data change goes to a change log, with point-in-time restore and a live changefeed.
+- **Safe use of AI.** A language model reads only through the same rules. Every number comes from the engine, and every quote is checked against its source.
 
-A language model makes the data easy to question. It also invents numbers and quotes. In AquilaDB, a model reads only through the privacy rules, every number comes from the engine, and every quote is checked against its source.
+In coaching and development work, this also gives the impact half of a return on investment: the engine measures change over time, and the cost side stays in the finance systems. The readouts describe change. They do not prove cause, unless the study design supports a causal claim.
+
+### When it is not the right tool
+
+AquilaDB is a single-node engine with one writer. It is built for research and analytics on people, not for every graph workload.
+
+- **Use a general-purpose graph database** if the data is not about persons, if you need a cluster, or if many processes must write at the same time.
+- **Do not use the floor to find one person.** Fraud detection and case investigation must reach individual records. The floor is for population questions.
+- **The floor is not a full anonymisation.** It stops small groups in grouped results. It does not replace a data protection assessment, and it does not make a raw export anonymous.
 
 ## Heritage
 
