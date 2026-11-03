@@ -2,12 +2,14 @@
 
 **A multi-model graph database for research.** AquilaDB keeps documents, a property graph, full-text search and vector search in one Rust engine, behind one query language. The privacy rules live inside the query compiler, not in the application around it.
 
-AquilaDB grew out of one need: psychological and coaching research that must answer questions about a population, over time, without exposing any one person. The same engine also serves a second purpose. It gives a language model graph context with provenance, so the model can read evidence but cannot invent it.
+Built for [The Land Institute](https://landinstitute.vercel.app), research on how adults develop at work.
+
+AquilaDB grew out of one need: research on people that must answer questions about a population, over time, without exposing any one person. The same engine also serves a second purpose. It gives a language model graph context with provenance, so the model can read evidence but cannot invent it.
 
 This repository is the public face of the project: the description and the public issues. The source code is private.
 
 <p align="center">
-  <img src="assets/aquilash.png" alt="The aquilash shell connected to an AquilaDB 1.1.2 server, ready for an AQL query" width="720">
+  <img src="assets/aquilash.png" alt="The aquilash shell connected to an AquilaDB server, ready for an AQL query" width="720">
 </p>
 
 <p align="center"><em><code>aquilash</code>, the interactive AQL shell, connected to an AquilaDB server.</em></p>
@@ -26,7 +28,7 @@ A collection opts in with one schema declaration. A subject field, such as `subj
 
 | Domain | The graph | A typical question | What the floor stops |
 |---|---|---|---|
-| **Coaching and leadership development** | Coachees, sessions, themes, programmes | Which themes change after a programme, per business unit? | A business unit with one coachee in it. |
+| **Leadership development** | Participants, programmes, cohorts, assessments | Which assessment scores change after a programme, per business unit? | A business unit with one participant in it. |
 | **People analytics and HR** | Employees, teams, reporting lines, collaboration, survey answers | How does engagement differ between teams that share a manager? | A survey report on a team too small to stay anonymous. Many works councils require a minimum group size for exactly this reason. |
 | **Health and care pathways** | Patients, referrals, clinics, treatments, outcomes | Which referral paths lead to a readmission? | A path that only one patient took. Health statistics often suppress small cells for the same reason. |
 | **Education and learning** | Learners, courses, cohorts, assessments | Which course sequences predict a drop-out? | A sequence that identifies one learner. |
@@ -46,7 +48,7 @@ The common shape: the question is about a population, the data is about persons,
 - **An audit trail.** Every data change goes to a change log, with point-in-time restore and a live changefeed.
 - **Safe use of AI.** A language model reads only through the same rules. Every number comes from the engine, and every quote is checked against its source.
 
-In coaching and development work, this also gives the impact half of a return on investment: the engine measures change over time, and the cost side stays in the finance systems. The readouts describe change. They do not prove cause, unless the study design supports a causal claim.
+In leadership development work, this also gives the impact half of a return on investment: the engine measures change over time, and the cost side stays in the finance systems. The readouts describe change. They do not prove cause, unless the study design supports a causal claim.
 
 ### When it is not the right tool
 
@@ -85,7 +87,7 @@ Most graph databases are general-purpose tools. They leave privacy, time, confid
 
 | Concern | A general-purpose graph database | AquilaDB |
 |---|---|---|
-| **Small groups** | The application must remember to hide small counts. | The query compiler adds a **cohort floor** to every grouped `COLLECT` over clinical data. A group of fewer than 5 distinct persons does not come back, for every caller, admin included. |
+| **Small groups** | The application must remember to hide small counts. | The query compiler adds a **cohort floor** to every grouped `COLLECT` over data about people. A group of fewer than 5 distinct persons does not come back, for every caller, admin included. |
 | **Sensitive fields** | Access is per collection, or the application encrypts. | Each field has an **encryption tier**: `None`, `Coded`, `Narrative` or `Identity`. Narrative text is encrypted at rest with AES-256-GCM. Identity fields never leave without write rights. The compiler enforces the tiers before the query runs. |
 | **Consent** | Not modelled. | A collection declares a consent field. A person without consent is removed from each analysis before it starts. The gate fails closed. |
 | **Time** | Timestamps are plain properties. | Each node has a `TemporalContext`: creation time, validity window and a **decay function** (half-life, linear, step, sequence). A traversal can rank by recency and prune expired edges. |
@@ -97,11 +99,11 @@ Most graph databases are general-purpose tools. They leave privacy, time, confid
 
 ## Example: the cohort floor
 
-A collection `coachees` holds six coachees in tech and one in pharma. An admin runs a grouped query:
+A collection `respondents` holds six respondents in tech and one in pharma. An admin runs a grouped query:
 
 ```aql
-FOR c IN coachees
-  COLLECT industry = c.industry
+FOR r IN respondents
+  COLLECT industry = r.industry
   RETURN industry
 ```
 
@@ -123,20 +125,12 @@ The query does not ask for a count, but the compiler adds one. The pharma group 
 
 The same rule applies to the admin, to a rewritten query with a subquery, and to a vertex that a graph traversal reaches.
 
-## The use case: psychological research under compliance
+## Two kinds of data
 
 AquilaDB holds two kinds of data and treats them differently.
 
 - **The research corpus** is one connected graph: works, chapters, ideas, concepts, persons and traditions, linked by citations, bridges, close matches and contradictions. Graph methods apply here: centrality, communities, paths, gaps between clusters.
-- **Clinical data** is analysed through tables, time windows and trajectories, always under the cohort floor and the consent gate.
-
-The compliance rules do not depend on a careful caller:
-
-- **The cohort floor counts persons, not rows.** Five records from one client are a cohort of one, and the engine suppresses it.
-- **Two phrasings give one answer.** The floor follows rows through subqueries and through graph traversals. A rewritten query does not escape it.
-- **A suppressed result is visible.** The response carries a warning, so an empty group and a hidden group are different.
-- **The floor can only go up.** Only a key scoped to one coach, with row access to that coach's own records, can lower it for that coach alone.
-- **Every data change goes to a change log.** The log supports point-in-time restore and a live changefeed.
+- **Data about people** is analysed through tables, time windows and trajectories, always under the cohort floor and the consent gate.
 
 ## A graph that gives context to a language model
 
@@ -159,7 +153,7 @@ The rules for a model are strict:
 
 ## Status
 
-`v1.1.1`, the latest Aquila release (2026-10-12). Single node. In daily use for the author's own coaching research since May 2026.
+Version 1.3 (November 2026). Single node. In daily use for the Land Institute's research since May 2026.
 
 Not in scope for v1: a distributed cluster, multiple concurrent writers, and the ArangoDB features that a single-node research graph does not need.
 
@@ -167,6 +161,6 @@ Not in scope for v1: a distributed cluster, multiple concurrent writers, and the
 
 Use the issues here for questions, ideas and collaboration requests. The working backlog is private.
 
-**Do not post personal, clinical or coaching data in an issue.** An issue is public. To report a vulnerability, see [SECURITY.md](SECURITY.md).
+**Do not post personal data in an issue.** An issue is public. To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 © 2026 Francisco Serrano Baptista. All rights reserved.
