@@ -4,7 +4,7 @@
 
 Built for [The Land Institute](https://landinstitute.vercel.app), research on how adults develop at work.
 
-AquilaDB grew out of one need: research on people that must answer questions about a population, over time, without exposing any one person. The same engine also serves a second purpose. It gives a language model graph context with provenance, so the model can read evidence but cannot invent it.
+AquilaDB grew out of one need: research on respondents that must answer questions about a population, over time, without exposing any one person. The same engine also serves a second purpose. It gives a language model graph context with provenance, so the model can read evidence but cannot invent it.
 
 This repository is the public face of the project: the description and the public issues. The source code is private.
 
@@ -52,7 +52,7 @@ In leadership development work, this also gives the impact half of a return on i
 
 ### When it is not the right tool
 
-AquilaDB is a single-node engine with one writer. It is built for research and analytics on people, not for every graph workload.
+AquilaDB is a single-node engine with one writer. It is built for research and analytics on respondents, not for every graph workload.
 
 - **Use a general-purpose graph database** if the data is not about persons, if you need a cluster, or if many processes must write at the same time.
 - **Do not use the floor to find one person.** Fraud detection and case investigation must reach individual records. The floor is for population questions.
@@ -77,7 +77,7 @@ AquilaDB is a re-implementation of the core of [ArangoDB](https://arangodb.com) 
 | Cluster first | Single node, one writer | One writer is the throughput ceiling that research ingestion actually reaches. |
 | Vectors stored with the documents | Vectors in a separate [usearch](https://github.com/unum-cloud/usearch) HNSW file, built in bulk | An HNSW insert in a B-tree or LSM store multiplies the write volume by about 100. |
 | Full-text index by view | [tantivy](https://github.com/quickwit-oss/tantivy) BM25, opt-in per field | A full-text rebuild over all text fields caused out-of-memory failures at scale. |
-| Access control per collection | Encryption tiers per field, and a cohort floor in the query compiler | Research on people needs rules on the result, not only on the collection. |
+| Access control per collection | Encryption tiers per field, and a cohort floor in the query compiler | Research on respondents needs rules on the result, not only on the collection. |
 
 AquilaDB contains no ArangoDB source code. ArangoDB is a behavioural reference only.
 
@@ -87,7 +87,7 @@ Most graph databases are general-purpose tools. They leave privacy, time, confid
 
 | Concern | A general-purpose graph database | AquilaDB |
 |---|---|---|
-| **Small groups** | The application must remember to hide small counts. | The query compiler adds a **cohort floor** to every grouped `COLLECT` over data about people. A group of fewer than 5 distinct persons does not come back, for every caller, admin included. |
+| **Small groups** | The application must remember to hide small counts. | The query compiler adds a **cohort floor** to every grouped `COLLECT` over data about respondents. A group of fewer than 5 distinct persons does not come back, for every caller, admin included. |
 | **Sensitive fields** | Access is per collection, or the application encrypts. | Each field has an **encryption tier**: `None`, `Coded`, `Narrative` or `Identity`. Narrative text is encrypted at rest with AES-256-GCM. Identity fields never leave without write rights. The compiler enforces the tiers before the query runs. |
 | **Consent** | Not modelled. | A collection declares a consent field. A person without consent is removed from each analysis before it starts. The gate fails closed. |
 | **Time** | Timestamps are plain properties. | Each node has a `TemporalContext`: creation time, validity window and a **decay function** (half-life, linear, step, sequence). A traversal can rank by recency and prune expired edges. |
@@ -130,7 +130,7 @@ The same rule applies to the admin, to a rewritten query with a subquery, and to
 AquilaDB holds two kinds of data and treats them differently.
 
 - **The research corpus** is one connected graph: works, chapters, ideas, concepts, persons and traditions, linked by citations, bridges, close matches and contradictions. Graph methods apply here: centrality, communities, paths, gaps between clusters.
-- **Data about people** is analysed through tables, time windows and trajectories, always under the cohort floor and the consent gate.
+- **Data about respondents** is analysed through tables, time windows and trajectories, always under the cohort floor and the consent gate.
 
 ## A graph that gives context to a language model
 
